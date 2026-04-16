@@ -57,6 +57,21 @@ export interface DesignParameters {
   cargoAmount: number;
   refrigerant: 'R407C' | 'R404A' | 'R134a';
   applySafetyLoad: boolean;
+
+  // Thermal Control Parameters
+  humidityControl: boolean;
+  targetHumidity: number; // %
+  airFlowRate: number; // m³/h
+  evaporatorTemp: number; // °C
+  condenserTemp: number; // °C
+  compressorCapacity: number; // kW
+  energyTarget: number; // kWh/24h - hedef enerji tüketimi
+  // Cargo-specific thermal parameters
+  cargoPreCoolTime: number; // h
+  cargoTransitHours: number; // h
+  cargoRespirationFactor: number; // multiplier
+  cargoMetabolicFactor: number; // multiplier
+  cargoVentReq: number; // m³/h
 }
 
 export interface CalculationResults {
@@ -82,6 +97,8 @@ export interface CalculationResults {
   weightInsulation: number;
   lossPanel: number;
   lossCorners: number;
+  ventilationHeatLoad: number;
+  infiltrationLoad: number;
   panelLoss: number;
   panelArea: number;
   panelHeight: number;

@@ -9,10 +9,56 @@ export const MATERIALS: Material[] = [
   { id: "xps", name: "Extruded Polystyrene (XPS)", kValue: 0.034, density: 35 },
 ];
 
+export const INSULATION_MATERIALS: Material[] = [
+  { id: "pu", name: "Polyurethane (PU)", kValue: 0.022, density: 40 },
+  { id: "pir", name: "Polyisocyanurate (PIR)", kValue: 0.020, density: 45 },
+  { id: "xps", name: "Extruded Polystyrene (XPS)", kValue: 0.034, density: 35 },
+];
+
+export const PROFILE_MATERIALS: Material[] = [
+  { id: "steel", name: "Stainless Steel", kValue: 15, density: 7850 },
+  { id: "aluminum", name: "Aluminum", kValue: 200, density: 2700 },
+];
+
+
 export const PSI_VALUES: Record<string, number> = {
   box_corner: 0.55,
   standard: 0.35,
   thermal: 0.15,
+};
+
+// Refrigerant Properties
+export const REFRIGERANT_PROPERTIES = {
+  'R407C': {
+    name: 'R407C',
+    copFactor: 1.0,
+    capFactor: 1.0,
+    latentHeat: 180,
+    evapTemp: -10,
+    condTemp: 45,
+    glideTemp: 7.0,
+    oilType: 'POE'
+  },
+  'R404A': {
+    name: 'R404A',
+    copFactor: 0.85,
+    capFactor: 1.25,
+    latentHeat: 145,
+    evapTemp: -15,
+    condTemp: 50,
+    glideTemp: 0.1,
+    oilType: 'POE'
+  },
+  'R134a': {
+    name: 'R134a',
+    copFactor: 1.15,
+    capFactor: 0.75,
+    latentHeat: 195,
+    evapTemp: -5,
+    condTemp: 40,
+    glideTemp: 0.0,
+    oilType: 'PAG'
+  }
 };
 
 export const CARGO_PROFILES = {
@@ -54,5 +100,20 @@ export const DEFAULT_DESIGN: any = {
   activeCargo: 'empty',
   cargoAmount: 0,
   refrigerant: 'R407C',
-  applySafetyLoad: false
+  applySafetyLoad: false,
+
+  // Thermal Control Parameters
+  humidityControl: false,
+  targetHumidity: 65,
+  airFlowRate: 120,
+  evaporatorTemp: -10,
+  condenserTemp: 45,
+  compressorCapacity: 5,
+  energyTarget: 80,
+  // Cargo-specific thermal parameters
+  cargoPreCoolTime: 4,
+  cargoTransitHours: 12,
+  cargoRespirationFactor: 2,
+  cargoMetabolicFactor: 3,
+  cargoVentReq: 50
 };

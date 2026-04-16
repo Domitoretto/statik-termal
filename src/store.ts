@@ -6,6 +6,7 @@ interface DesignStore {
   setDesign: (newDesign: any) => void;
   updateDimensions: (dimensions: any) => void;
   updateLayers: (layers: any) => void;
+  updateThermalParams: (params: any) => void;
 }
 
 export const useDesignStore = create<DesignStore>((set) => ({
@@ -17,4 +18,8 @@ export const useDesignStore = create<DesignStore>((set) => ({
   updateLayers: (layers) => set((state) => ({ 
     design: { ...state.design, wallLayers: layers } 
   })),
+  updateThermalParams: (params) => set((state) => ({
+    design: { ...state.design, ...params }
+  })),
 }));
+
