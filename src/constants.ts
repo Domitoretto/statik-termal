@@ -21,10 +21,14 @@ export const PROFILE_MATERIALS: Material[] = [
 ];
 
 
+// ISO 14683 & EN 10211 — sandviç izolasyon paneli köşe PSI değerleri (W/mK)
+// box_corner : ısı kırıcısız metal köşe profili
+// standard   : standart köşe, kısmi metal temas
+// thermal    : termik köprü kırıcılı köşe
 export const PSI_VALUES: Record<string, number> = {
-  box_corner: 0.55,
-  standard: 0.35,
-  thermal: 0.15,
+  box_corner: 0.25,
+  standard: 0.14,
+  thermal: 0.06,
 };
 
 // Refrigerant Properties

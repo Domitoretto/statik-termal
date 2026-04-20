@@ -3,6 +3,7 @@ import { Layers, Thermometer, Wind, Package, ChevronRight } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
 import { CARGO_PROFILES, INSULATION_MATERIALS, PROFILE_MATERIALS } from "../constants";
+import { ThermalContourView } from "./ThermalContourView";
 
 interface ThermalControlPanelProps {
   design: any;
@@ -13,6 +14,8 @@ interface ThermalControlPanelProps {
   results?: any;
 }
 
+/* ─────────────────────────────────────────────────────── */
+/*  Isometric Box Skeleton SVG                             */
 /* ─────────────────────────────────────────────────────── */
 /*  Isometric Box Skeleton SVG                             */
 /* ─────────────────────────────────────────────────────── */
@@ -323,12 +326,12 @@ export const ThermalControlPanel: React.FC<ThermalControlPanelProps> = ({
 
   return (
     <div className="flex flex-col h-full">
-      {/* ── ISOMETRIC SKELETON ── */}
+      {/* ── THERMAL CONTOUR VIEW ── */}
       <div className="relative shrink-0 bg-slate-950 border-b border-slate-800/80" style={{ height: 220 }}>
         <div className="absolute top-3 left-4 z-10 flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
           <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">
-            Termal İskelet Görünümü
+            Termal Kontur · CFD Kesit
           </span>
         </div>
         <div className="absolute top-3 right-4 z-10">
@@ -336,7 +339,7 @@ export const ThermalControlPanel: React.FC<ThermalControlPanelProps> = ({
             {design.refrigerant}
           </span>
         </div>
-        <IsometricSkeleton design={design} selectedWall={selectedWall} results={results} />
+        <ThermalContourView design={design} selectedWall={selectedWall} results={results} />
       </div>
 
       {/* ── SCROLLABLE PARAMS ── */}

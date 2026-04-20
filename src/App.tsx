@@ -58,6 +58,7 @@ import { StaticAnalysisPanel } from "./components/StaticAnalysisPanel";
 import { ThermalAnalysisPanel } from "./components/ThermalAnalysisPanel";
 import { ThermalControlPanel } from "./components/ThermalControlPanel";
 import { AssemblyPanel } from "./components/AssemblyPanel";
+import { ReportPage } from "./pages/ReportPage";
 
 // --- 3D Components ---
 function BoxMesh({ design, results, selectedWall, activeTab }: { design: any; results: any; selectedWall: string; activeTab: "thermal" | "static" | "assembly" }) {
@@ -262,6 +263,7 @@ export default function App() {
   const [selectedWall, setSelectedWall] = useState<"leftSide" | "rightSide" | "front" | "back" | "roof" | "floor">("leftSide");
   const [panelWeightMode, setPanelWeightMode] = useState<"total" | "profile">("total");
   const [deflectionMode, setDeflectionMode] = useState<"profile" | "composite">("composite");
+  const [showReport, setShowReport] = useState(false);
 
   const selectedProfileMaterial = PROFILE_MATERIALS.find((m) => m.id === design.profileMaterialId) || PROFILE_MATERIALS[0];
   const selectedInsulationMaterial = INSULATION_MATERIALS.find((m) => m.id === design.insulationMaterialId) || INSULATION_MATERIALS[0];
@@ -1471,7 +1473,15 @@ export default function App() {
         {/* Header */}
         <header className="h-12 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 shrink-0">
           <h1 className="text-xs font-bold tracking-tight text-white uppercase">Termo-Statik Kasa Tasarım Platformu</h1>
-          <span className="px-2 py-0.5 bg-blue-600/20 text-blue-400 text-[8px] font-black rounded-full border border-blue-600/30 uppercase">V75 Kernel Stable</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowReport(true)}
+              className="flex items-center gap-1.5 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-[9px] font-bold uppercase tracking-wide rounded transition-colors"
+            >
+              <FileText className="w-3 h-3" /> Rapor
+            </button>
+            <span className="px-2 py-0.5 bg-blue-600/20 text-blue-400 text-[8px] font-black rounded-full border border-blue-600/30 uppercase">V75 Kernel Stable</span>
+          </div>
         </header>
 
         <div className="flex-1 flex overflow-hidden">
@@ -1950,6 +1960,17 @@ export default function App() {
 
         </div>
       </main>
+
+      {/* ── Rapor Modal ────────────────────────────────────────────────── */}
+      {showReport && (
+        <ReportPage
+          design={design}
+          results={results}
+          selectedWall={selectedWall}
+          onClose={() => setShowReport(false)}
+          onExportPDF={() => { setShowReport(false); generatePDF(); }}
+        />
+      )}
     </div>
   );
 }

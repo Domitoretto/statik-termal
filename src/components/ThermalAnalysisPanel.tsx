@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import {
   Zap, Thermometer, Wind, Activity, AlertTriangle, CheckCircle2,
-  Cpu, TrendingUp, BarChart3, Gauge,
+  Cpu, TrendingUp, Gauge,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { cn } from "../lib/utils";
@@ -69,66 +69,6 @@ const CopGauge: React.FC<{ cop: number; maxCop?: number }> = ({ cop, maxCop = 5 
   );
 };
 
-/* ─────────────────────────────────────────────────────── */
-/*  Thermal Bridge Heatmap Bar                              */
-/* ─────────────────────────────────────────────────────── */
-const ThermalBridgeBar: React.FC<{ design: any; bridgeLossRate: number; results: any }> = ({ design, bridgeLossRate, results }) => {
-  const numBridges = Math.max(2, results.n_panel_studs || 2);
-  const pitch = Math.round(results.actualPitch) || 650;
-  const bridgePositions = Array.from({ length: numBridges }, (_, i) =>
-    ((i + 0.5) / numBridges) * 100
-  );
-  const bridgeIntensity = Math.min(1, bridgeLossRate / 30); // normalize for color intensity
-
-  return (
-    <div className="space-y-2">
-      <div className="relative h-12 rounded-xl overflow-hidden border border-slate-700/60" style={{ boxShadow: "inset 0 0 30px rgba(0,0,0,0.5)" }}>
-        {/* Insulation base gradient */}
-        <div className="absolute inset-0"
-          style={{ background: "linear-gradient(to right, #071a2e, #0a2240, #0c2a50, #0a2240, #071a2e)" }} />
-        {/* Bridge profile lines */}
-        {bridgePositions.map((pos, i) => (
-          <div key={i} className="absolute top-0 bottom-0 -translate-x-1/2" style={{
-            left: `${pos}%`,
-            width: 2,
-            background: `linear-gradient(to bottom, rgba(239,68,68,${0.3 + bridgeIntensity * 0.7}), rgba(249,115,22,${0.5 + bridgeIntensity * 0.4}), rgba(239,68,68,${0.3 + bridgeIntensity * 0.7}))`
-          }} />
-        ))}
-        {/* Hot glow on bridges */}
-        {bridgePositions.slice(0, Math.min(numBridges, 20)).map((pos, i) => (
-          <div key={`glow-${i}`} className="absolute top-0 bottom-0 -translate-x-1/2" style={{
-            left: `${pos}%`, width: 8,
-            background: `radial-gradient(ellipse 4px 100% at center, rgba(239,68,68,${bridgeIntensity * 0.25}) 0%, transparent 100%)`
-          }} />
-        ))}
-        {/* Temp axis labels */}
-        <div className="absolute inset-0 flex items-end justify-between px-2 pb-1 pointer-events-none">
-          <span className="text-[7px] font-black text-blue-300 font-mono">{design.targetTemp}°C</span>
-          <span className="text-[7px] font-black text-slate-500 font-mono uppercase tracking-wider">
-            {numBridges} profil · {pitch}mm aralık
-          </span>
-          <span className="text-[7px] font-black text-orange-400 font-mono">{design.ambientTemp}°C</span>
-        </div>
-      </div>
-      {/* Legend */}
-      <div className="flex items-center gap-4 text-[7px] font-black text-slate-600 uppercase tracking-wider">
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-2 rounded-sm" style={{ background: "#0a2240" }} />
-          Yalıtım Bölgesi
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-1 h-3 rounded-sm bg-red-500/70" />
-          Isı Köprüsü (Profil)
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-4 h-0.5 bg-slate-600" />
-          Köprü Oranı: <span className="text-orange-400 ml-1">{bridgeLossRate.toFixed(1)}%</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const WALL_LABELS: Record<string, string> = {
   leftSide: "Sol Yan",
   rightSide: "Sağ Yan",
@@ -151,20 +91,23 @@ export const ThermalAnalysisPanel: React.FC<ThermalAnalysisPanelProps> = ({
 
   const deltaT = design.ambientTemp - design.targetTemp;
 
-  // U-Value: proper thermal resistance calculation
-  // U = 1 / (R_si + R_insulation + R_se)  [R_si=0.13, R_se=0.04 for walls per ISO 6946]
+  // U-Değeri: Efektif ısı geçirgenlik katsayısı
+  // U_eff = (Q_panel + Q_köşe) / (A_toplam × ΔT)
+  // Profil köprüsü + köşe köprüsü dahil — ISO 6946 / ISO 14683
   const uValue = useMemo(() => {
-    const thicknessMm = design.wallThickness || 80;
-    const R_si = 0.13; // internal surface resistance (m²K/W)
-    const R_se = 0.04; // external surface resistance
-    const R_ins = (thicknessMm / 1000) / insulMat.kValue;
-    const uPure = 1 / (R_si + R_ins + R_se);
-    // Effective U including thermal bridge increment (ISO 14683 approach)
-    // ΔU = Σ(ψ_j × l_j) / A_total
     const totalArea = results.totalSurfaceArea || 1;
-    const psiLossPer_m2 = (results.lossCorners || 0) / (totalArea * (design.ambientTemp - design.targetTemp || 1));
-    return uPure + psiLossPer_m2;
-  }, [design.wallThickness, design.ambientTemp, design.targetTemp, insulMat, results]);
+    const dT = Math.abs(design.ambientTemp - design.targetTemp) || 1;
+    // Tüm iletim kayıpları: yalıtım + stud köprüsü + köşe köprüsü
+    const totalTransmission = (results.lossPanel || 0) + (results.lossCorners || 0);
+    return totalTransmission / (totalArea * dT);
+  }, [results, design.ambientTemp, design.targetTemp]);
+
+  // Saf yalıtım U değeri (köprü yok) — karşılaştırma için
+  const uPure = useMemo(() => {
+    const thicknessMm = design.wallThickness || 80;
+    const R_ins = (thicknessMm / 1000) / insulMat.kValue;
+    return 1 / (0.13 + R_ins + 0.04);
+  }, [design.wallThickness, insulMat]);
 
   const bridgeLossRate = useMemo(() =>
     results.totalHeatGain > 0 ? ((results.lossCorners || 0) / results.totalHeatGain) * 100 : 0,
@@ -185,10 +128,10 @@ export const ThermalAnalysisPanel: React.FC<ThermalAnalysisPanelProps> = ({
       bg: "bg-red-500/5", icon: <Thermometer className="w-4 h-4 text-red-400" />,
     },
     {
-      label: "Yalıtım U-Değeri",
+      label: "Efektif U-Değeri",
       value: uValue.toFixed(3),
       unit: "W/m²K",
-      sub: `${insulMat.name} · ${design.wallThickness}mm`,
+      sub: `Saf yalıtım: ${uPure.toFixed(3)} · Köprülerle: ${uValue.toFixed(3)} W/m²K`,
       color: "text-cyan-400", border: "border-cyan-500/20", glow: "hover:border-cyan-500/40",
       bg: "bg-cyan-500/5", icon: <Cpu className="w-4 h-4 text-cyan-400" />,
     },
@@ -289,33 +232,6 @@ export const ThermalAnalysisPanel: React.FC<ThermalAnalysisPanelProps> = ({
         </div>
       </div>
 
-      {/* ── THERMAL BRIDGE HEATMAP ── */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-[#070d1a] rounded-2xl border border-slate-800/80 p-4 space-y-3"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-4 h-4 text-blue-400" />
-            <div>
-              <div className="text-[9px] font-black text-blue-300 uppercase tracking-[0.2em]">Termal Köprü Geçirgenlik Matrisi</div>
-              <div className="text-[7px] text-slate-600 font-bold uppercase tracking-widest">Metal profil ısı sızıntısı simülasyonu</div>
-            </div>
-          </div>
-          <div className={cn(
-            "px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider",
-            bridgeLossRate > 25 ? "bg-red-500/15 text-red-400 border border-red-500/25" :
-            bridgeLossRate > 15 ? "bg-amber-500/15 text-amber-400 border border-amber-500/25" :
-            "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25"
-          )}>
-            {bridgeLossRate > 25 ? "⚠ Yüksek" : bridgeLossRate > 15 ? "! Orta" : "✓ Düşük"} Köprü
-          </div>
-        </div>
-        <ThermalBridgeBar design={design} bridgeLossRate={bridgeLossRate} results={results} />
-      </motion.div>
-
       {/* ── HEAT LOSS BREAKDOWN ── */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -396,6 +312,11 @@ export const ThermalAnalysisPanel: React.FC<ThermalAnalysisPanelProps> = ({
                 <div className="text-[7px] text-slate-600 font-black uppercase">Yoğuşturucu</div>
                 <div className="text-[11px] font-black text-orange-400 font-mono mt-0.5">{design.condenserTemp}°C</div>
               </div>
+            </div>
+            {/* COP formül açıklaması */}
+            <div className="text-[6.5px] text-slate-600 text-center leading-relaxed px-1">
+              COP = (T<sub>evap</sub> / ΔT<sub>çevrim</sub>) × η<sub>komp</sub>
+              {" "}(Carnot × 0.55)
             </div>
           </div>
 
